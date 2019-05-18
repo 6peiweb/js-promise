@@ -64,96 +64,13 @@
         case PROMISE_STATUE.PENDING:
           PromiseOnFulfilledQuene.push(method.resolved)
           PromiseOnRejectedQuene.push(method.rejected)
-          break;
+          break
         case PROMISE_STATUE.RESOLVE:
           method.resolved(PromiseValue)
-          break;
+          break
         case PROMISE_STATUE.REJECT:
           method.rejected(PromiseValue)
-          break;
-      }
-    })
-  }
-
-  Promise.prototype._resolve = function (value) {
-    if (this['[[PromiseStatus]]'] !== PROMISE_STATUE.PENDING) return
-    var self = this
-    var run = function () {
-      self['[[PromiseStatus]]'] = PROMISE_STATUE.RESOLVE
-      self['[[PromiseValue]]'] = value
-      var cb;
-      while (cb = self['[[PromiseOnFulfilledQuene]]'].shift()) {
-        cb(self['[[PromiseValue]]'])
-      }
-    }
-    setTimeout(() => run())
-  }
-
-  Promise.prototype._reject = function (value) {
-    if (this['[[PromiseStatus]]'] !== PROMISE_STATUE.PENDING) return
-    var self = this
-    var run = function () {
-      self['[[PromiseStatus]]'] = PROMISE_STATUE.REJECT
-      self['[[PromiseValue]]'] = value
-      var cb;
-      while (cb = self['[[PromiseOnRejectedQuene]]'].shift()) {
-        cb(self['[[PromiseValue]]'])
-      }
-    }
-    setTimeout(() => run())
-  }
-
-  Promise.prototype.then = function (resolve, reject) {
-    var PromiseStatus = this['[[PromiseStatus]]']
-    var PromiseValue = this['[[PromiseValue]]']
-    var PromiseOnFulfilledQuene = this['[[PromiseOnFulfilledQuene]]']
-    var PromiseOnRejectedQuene = this['[[PromiseOnRejectedQuene]]']
-    return new Promise(function (nextResolve, nextReject) {
-      var method = {
-        resolved: function (value) {
-          try {
-            if (!isFunction(resolve)) {
-              nextResolve(value)
-            } else {
-              var result = resolve(value)
-              if (result instanceof Promise) {
-                result.then(nextResolve, nextReject)
-              } else {
-                nextResolve(result)
-              }
-            }
-          } catch (error) {
-            nextReject(error)
-          }
-        },
-        rejected: function (value) {
-          try {
-            if (!isFunction(reject)) {
-              nextReject(value)
-            } else {
-              var result = reject(value)
-              if (result instanceof Promise) {
-                result(nextResolve, nextReject)
-              } else {
-                nextReject(result)
-              }
-            }
-          } catch (error) {
-            nextReject(error)
-          }
-        }
-      }
-      switch (PromiseStatus) {
-        case PROMISE_STATUE.PENDING:
-          PromiseOnFulfilledQuene.push(method.resolved)
-          PromiseOnRejectedQuene.push(method.rejected)
-          break;
-        case PROMISE_STATUE.RESOLVE:
-          method.resolved(PromiseValue)
-          break;
-        case PROMISE_STATUE.REJECT:
-          method.rejected(PromiseValue)
-          break;
+          break
       }
     })
   }
@@ -172,6 +89,46 @@
         throw error
       })
     })
+  }
+
+  Promise.prototype.finally = function (cb) {
+    return this.then(function (result) {
+      Promise.resolve(cb()).then(function () {
+        return result
+      })
+    }, function (error) {
+      Promise.resolve(cb()).then(function () {
+        throw error
+      })
+    })
+  }
+
+  Promise.prototype._resolve = function (value) {
+    if (this['[[PromiseStatus]]'] !== PROMISE_STATUE.PENDING) return
+    var self = this
+    var run = function () {
+      self['[[PromiseStatus]]'] = PROMISE_STATUE.RESOLVE
+      self['[[PromiseValue]]'] = value
+      var cb
+      while (cb = self['[[PromiseOnFulfilledQuene]]'].shift()) {
+        cb(self['[[PromiseValue]]'])
+      }
+    }
+    setTimeout(() => run())
+  }
+
+  Promise.prototype._reject = function (value) {
+    if (this['[[PromiseStatus]]'] !== PROMISE_STATUE.PENDING) return
+    var self = this
+    var run = function () {
+      self['[[PromiseStatus]]'] = PROMISE_STATUE.REJECT
+      self['[[PromiseValue]]'] = value
+      var cb
+      while (cb = self['[[PromiseOnRejectedQuene]]'].shift()) {
+        cb(self['[[PromiseValue]]'])
+      }
+    }
+    setTimeout(() => run())
   }
 
   Promise.resolve = function (target) {
